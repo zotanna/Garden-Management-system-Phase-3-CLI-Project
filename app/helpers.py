@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from model import Plant, Garden, Gardener, Base
 
 # Create the engine
-engine = create_engine('sqlite:///database.db')
+engine = create_engine('sqlite:///garden.db')
 
 # Create all tables in the engine
 Base.metadata.create_all(engine)
@@ -14,9 +14,15 @@ Session = sessionmaker(bind=engine)
 # Create a session
 session = Session()
 
-def add_gardener(gardener_name):
+def add_gardener(session, gardener_name):
     location_input = input("City, State: ")
-    exp_input = int(input("Years of experience: "))  # Ensure to convert input to int
+    exp_input = int(input("Years of experience: "))
+
+    # Check if the gardener already exists
+    existing_gardener = session.query(Gardener).filter_by(name=gardener_name).first()
+    if existing_gardener:
+        print(f"{gardener_name} already exists in the database.")
+        return
 
     new_gardener = Gardener(
         name=gardener_name,
@@ -28,7 +34,7 @@ def add_gardener(gardener_name):
     session.commit()
     print(f"Welcome to MBM Gardens, {gardener_name}. You've been added to our list of gardeners.")
 
-def view_gardens(gardens):
+def view_gardens(gardens, plants, gardeners):
     print("-" * 112)
     print(
         f'| {"ID":<3} | {"Name":<20} | {"Location":<20} | {"XP LVL":<10} | {"Plant":<20} | {"Gardener":<20} |'
@@ -51,11 +57,13 @@ def view_gardens(gardens):
 # Example usage
 if __name__ == '__main__':
     # Test adding a gardener
-    add_gardener("John Doe")
+    add_gardener(session, "John Doe")
 
     # Test viewing gardens (assuming you have gardens loaded from somewhere)
     gardens = session.query(Garden).all()
-    view_gardens(gardens)
+    plants = session.query(Plant).all()
+    gardeners = session.query(Gardener).all()
+    view_gardens(gardens, plants, gardeners)  # Pass the necessary arguments
 
     # Close the session
     session.close()

@@ -1,53 +1,89 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from model import Plant, Gardener, Garden, Base
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import declarative_base
+
+
 
 # Create the engine
-engine = create_engine('sqlite:///garden.db')
+engine = create_engine('sqlite:///garden.db') 
 
-# Create a session class
+# Create a session maker
 Session = sessionmaker(bind=engine)
 
-# Create a session
-session = Session()
+# Create a declarative base instance
+Base = declarative_base()
 
-# Clear out existing data
-Base.metadata.drop_all(engine)
-Base.metadata.create_all(engine)
+# Define your models: Plant, Gardener, Garden
+class Plant(Base):
+    __tablename__ = 'plants'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    species = Column(String)
+    season = Column(String)
+    harvest_time = Column(Integer)
+    quantity = Column(Integer)
 
-# Create instances of models
-plants = [
-    Plant(name="Tomatoes", species="Solanum lycopersicum", season="Spring", harvest_time=10, quantity=12),
-    Plant(name="Bush Beans", species="Phaseolus vulgaris", season="Summer", harvest_time=6, quantity=14),
-    Plant(name="Watermelons", species="Citrullus lanatus", season="Summer", harvest_time=11, quantity=15),
-    Plant(name="Pumpkins", species="Cucurbita pepo", season="Fall", harvest_time=15, quantity=10),
-    Plant(name="Strawberries", species="Fragaria ananassa", season="Spring", harvest_time=5, quantity=6)
-]
+class Gardener(Base):
+    __tablename__ = 'gardeners'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    location = Column(String)
+    experience = Column(Integer)
 
-gardeners = [
-    Gardener(name="Emily Johnson", location="Seattle, WA", experience=3),
-    Gardener(name="Michael Thompson", location="Austin, TX", experience=2),
-    Gardener(name="Luisa Rodriguez", location="Chicago, IL", experience=1),
-    Gardener(name="Sophie Clark", location="San Francisco, CA", experience=4),
-    Gardener(name="Juan Hernandez", location="Miami, FL", experience=0)
-]
+class Garden(Base):
+    __tablename__ = 'gardens'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    location = Column(String)
+    experience_req = Column(Integer)
+    plant_id = Column(Integer, ForeignKey('plants.id'))
+    gardener_id = Column(Integer, ForeignKey('gardeners.id'))
 
-gardens = [
-    Garden(name="Sunshine Paradise", location="Seattle, WA", experience_req=3, plant_id=1, gardener_id=1),
-    Garden(name="Breezy Meadows", location="Austin, TX", experience_req=2, plant_id=2, gardener_id=2),
-    Garden(name="City Retreat", location="Chicago, IL", experience_req=1, plant_id=3, gardener_id=3),
-    Garden(name="Serene Haven", location="San Francisco, CA", experience_req=4, plant_id=4, gardener_id=4),
-    Garden(name="Tropical Oasis", location="Miami, FL", experience_req=0, plant_id=5, gardener_id=5)
-]
+    plant = relationship('Plant', backref='garden')
+    gardener = relationship('Gardener', backref='garden')
 
-# Add instances to the session
-session.add_all(plants)
-session.add_all(gardeners)
-session.add_all(gardens)
+if __name__ == '__main__':
+    # Create all tables defined in the models
+    Base.metadata.create_all(engine)
 
-# Commit the session to the database
-session.commit()
+    # Create a session
+    session = Session()
 
-# Close the session
-session.close()
+    # Data Seeding - Create instances of plants, gardeners, gardens, and add them to the session
+    plants = [
+        Plant(
+            name="Tomatoes",
+            species="Solanum lycopersicum",
+            season="Short rains",
+            harvest_time=10,
+            quantity=12
+        ),
+        # Add more Plant instances as needed
+    ]
 
+    gardeners = [
+        Gardener(
+            name="Susan Wanjiku",
+            location="Nyandarua, Naivasha",
+            experience=3
+        ),
+        # Add more Gardener instances as needed
+    ]
+
+    gardens = [
+        Garden(
+            name="Kagrow farm",
+            location="Nyandarua Naivasha, WA",
+            experience_req=3,
+            plant_id=1,
+            gardener_id=1
+        ),
+        # Add more Garden instances as needed
+    ]
+
+    session.add_all(plants)
+    session.add_all(gardeners)
+    session.add_all(gardens)
+
+    # Commit the changes to the database
+    session.commit()
