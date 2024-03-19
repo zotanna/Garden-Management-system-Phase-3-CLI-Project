@@ -1,89 +1,119 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.orm import declarative_base
-
-
-
-# Create the engine
-engine = create_engine('sqlite:///garden.db') 
-
-# Create a session maker
-Session = sessionmaker(bind=engine)
-
-# Create a declarative base instance
-Base = declarative_base()
-
-# Define your models: Plant, Gardener, Garden
-class Plant(Base):
-    __tablename__ = 'plants'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    species = Column(String)
-    season = Column(String)
-    harvest_time = Column(Integer)
-    quantity = Column(Integer)
-
-class Gardener(Base):
-    __tablename__ = 'gardeners'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    location = Column(String)
-    experience = Column(Integer)
-
-class Garden(Base):
-    __tablename__ = 'gardens'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    location = Column(String)
-    experience_req = Column(Integer)
-    plant_id = Column(Integer, ForeignKey('plants.id'))
-    gardener_id = Column(Integer, ForeignKey('gardeners.id'))
-
-    plant = relationship('Plant', backref='garden')
-    gardener = relationship('Gardener', backref='garden')
+from app import app
+from models import db, Plant, Gardener, Garden
 
 if __name__ == '__main__':
-    # Create all tables defined in the models
-    Base.metadata.create_all(engine)
+    with app.app_context():
 
-    # Create a session
-    session = Session()
+        # SQLAlchemy seeding
 
-    # Data Seeding - Create instances of plants, gardeners, gardens, and add them to the session
-    plants = [
-        Plant(
-            name="Tomatoes",
-            species="Solanum lycopersicum",
-            season="Short rains",
-            harvest_time=10,
-            quantity=12
-        ),
-        # Add more Plant instances as needed
-    ]
+        # Clear out models
+        Plant.query.delete()
+        Gardener.query.delete()
+        Garden.query.delete()
 
-    gardeners = [
-        Gardener(
-            name="Susan Wanjiku",
-            location="Nyandarua, Naivasha",
-            experience=3
-        ),
-        # Add more Gardener instances as needed
-    ]
+        plants = [
+            Plant(
+                name="Sukuma Wiki",
+                species="Brassica oleracea",
+                season="Year-round",
+                harvest_time=8
+            ),
+            Plant(
+                name="Maize",
+                species="Zea mays",
+                season="Rainy season",
+                harvest_time=90
+            ),
+            Plant(
+                name="Kales",
+                species="Brassica oleracea",
+                season="Cool season",
+                harvest_time=60
+            ),
+            Plant(
+                name="Tomatoes",
+                species="Solanum lycopersicum",
+                season="Year-round",
+                harvest_time=12
+            ),
+            Plant(
+                name="Capsicum",
+                species="Capsicum annuum",
+                season="Year-round",
+                harvest_time=10
+            )
+        ]
 
-    gardens = [
-        Garden(
-            name="Kagrow farm",
-            location="Nyandarua Naivasha, WA",
-            experience_req=3,
-            plant_id=1,
-            gardener_id=1
-        ),
-        # Add more Garden instances as needed
-    ]
+        db.session.add_all(plants)
 
-    session.add_all(plants)
-    session.add_all(gardeners)
-    session.add_all(gardens)
+        gardeners = [
+            Gardener(
+                name="John Kamau",
+                location="Nairobi",
+                experience=5
+            ),
+            Gardener(
+                name="Jane Muthoni",
+                location="Eldoret",
+                experience=3
+            ),
+            Gardener(
+                name="David Gitonga",
+                location="Mombasa",
+                experience=4
+            ),
+            Gardener(
+                name="Mary Wanjiku",
+                location="Kisumu",
+                experience=2
+            ),
+            Gardener(
+                name="Peter Maina",
+                location="Nakuru",
+                experience=1
+            )
+        ]
 
-    # Commit the changes to the database
-    session.commit()
+        db.session.add_all(gardeners)
+
+        gardens = [
+            Garden(
+                name="Green Oasis",
+                location="Nairobi",
+                experience_req=5,
+                plant_id=1,
+                gardener_id=1
+            ),
+            Garden(
+                name="Maize Haven",
+                location="Eldoret",
+                experience_req=3,
+                plant_id=2,
+                gardener_id=2
+            ),
+            Garden(
+                name="Coastal Garden",
+                location="Mombasa",
+                experience_req=4,
+                plant_id=4,
+                gardener_id=3
+            ),
+            Garden(
+                name="Lakefront Farm",
+                location="Kisumu",
+                experience_req=2,
+                plant_id=3,
+                gardener_id=4
+            ),
+            Garden(
+                name="Highland Paradise",
+                location="Nakuru",
+                experience_req=1,
+                plant_id=5,
+                gardener_id=5
+            )
+        ]
+
+        db.session.add_all(gardens)
+
+        db.session.commit()
